@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import FriendList from '@/components/FriendList';
@@ -13,42 +12,44 @@ interface Friend {
 export default function Friends() {
   const [friends, setFriends] = useState<Friend[]>([]);
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const email = typeof window !== 'undefined' ? localStorage.getItem('email') : null; // dùng email thay userId
 
   useEffect(() => {
-    if (!token || !userId) {
+    if (!token || !email) {
       window.location.href = '/login';
       return;
     }
 
-    fetch(`${process.env.FACEBOOK_SERVICE_URL}/friends?userId=${userId}`, {
+    fetch(`${process.env.NEXT_PUBLIC_FACEBOOK_SERVICE_URL}/friends?email=${email}`, { // đổi thành email
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) => setFriends(data));
-  }, [token, userId]);
+  }, [token, email]);
 
   const handleAddFriend = () => {
-    const friendId = prompt('Enter friend ID to add:');
-    if (friendId && token && userId) {
-      fetch(`${process.env.FACEBOOK_SERVICE_URL}/friends`, {
+    const friendEmail = prompt('Enter friend email to add:'); // đổi prompt hỏi email
+    if (friendEmail && token && email) {
+      fetch(`${process.env.NEXT_PUBLIC_FACEBOOK_SERVICE_URL}/friends`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId, friendId }),
+        body: JSON.stringify({ email, friendEmail }), // đổi thành email
       })
         .then((res) => res.json())
         .then(() => {
-          fetch(`${process.env.FACEBOOK_SERVICE_URL}/friends?userId=${userId}`, {
+          fetch(`${process.env.NEXT_PUBLIC_FACEBOOK_SERVICE_URL}/friends?email=${email}`, { // refetch
             headers: { Authorization: `Bearer ${token}` },
-          }).then((res) => res.json()).then((data) => setFriends(data));
+          })
+            .then((res) => res.json())
+            .then((data) => setFriends(data));
         });
     }
   };
 
-  if (!token || !userId) return null;
+  if (!token || !email) return null;
 
   return (
     <div className="container-fluid">

@@ -1,13 +1,14 @@
+// frontend/app/chat/page.tsx
 'use client';
-
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import ChatComponent from '@/components/ChatComponent';
+import ChatComponent from '@/components/ChatComponents';
 
 interface Message {
-  senderId: string;
-  receiverId: string;
+  senderId: string; // Thay bằng email
+  receiverId: string; // Thay bằng email
   content: string;
   mediaUrl?: string;
 }
@@ -15,18 +16,25 @@ interface Message {
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [friendId, setFriendId] = useState('2'); // Giả định friendId
-  const socketRef = useRef<WebSocket | null>(null);
-  const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const [friendEmail, setFriendEmail] = useState('friend2@example.com'); // Giả định email của bạn
+  const socketRef = useRef<W3CWebSocket | null>(null);
+  const router = useRouter();
+
+  const email = typeof window !== 'undefined' ? localStorage.getItem('email') : null;
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  console.log('Email:', email);
+  console.log('Token:', token);
+  console.log('--------------------------------');
 
   useEffect(() => {
-    if (!userId || !token) {
-      window.location.href = '/login';
+    // Nếu chưa login thì chuyển về login
+    if (!email || !token) {
+      router.push('/login');
       return;
     }
 
-    socketRef.current = new W3CWebSocket(`${process.env.MESSENGER_SERVER_URL.replace('http', 'ws')}/ws/${userId}/${friendId}`, token);
+    const wsUrl = `${process.env.NEXT_PUBLIC_MESSENGER_SERVER_URL!.replace('http', 'ws')}/ws/${email}/${friendEmail}`;
+    socketRef.current = new W3CWebSocket(wsUrl, token);
 
     socketRef.current.onopen = () => {
       console.log('WebSocket Connected');
@@ -45,22 +53,29 @@ export default function Chat() {
       console.log('WebSocket Disconnected');
     };
 
-    fetch(`${process.env.MESSENGER_SERVER_URL}/messages?senderId=${userId}&receiverId=${friendId}`, {
+    // Fetch tin nhắn cũ
+    fetch(`${process.env.NEXT_PUBLIC_MESSENGER_SERVER_URL}/messages?senderId=${email}&receiverId=${friendEmail}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
-      .then((data) => setMessages(data));
+      .then((res) => {
+        if (res.status === 401) {
+          router.push('/login'); // token hết hạn thì cũng đẩy về login
+        }
+        return res.json();
+      })
+      .then((data) => setMessages(data))
+      .catch(() => router.push('/login'));
 
     return () => {
       if (socketRef.current) socketRef.current.close();
     };
-  }, [userId, friendId, token]);
+  }, [email, friendEmail, token, router]);
 
   const sendMessage = (content: string) => {
-    if (content.trim() && socketRef.current && userId && token) {
+    if (content.trim() && socketRef.current && email && token) {
       const message: Message = {
-        senderId: userId,
-        receiverId: friendId,
+        senderId: email, // Sử dụng email thay vì userId
+        receiverId: friendEmail, // Sử dụng email thay vì friendId
         content,
         mediaUrl: '',
       };
@@ -68,7 +83,7 @@ export default function Chat() {
     }
   };
 
-  if (!userId || !token) return null;
+  if (!email || !token) return null; // hoặc hiện loading tạm
 
   return (
     <div className="container-fluid">
