@@ -66,6 +66,7 @@ exports.googleCallback = async (req, res) => {
 
     // Tạo JWT token
     const token = jwt.sign({
+      id: user.id,
       username: user.username,
       email: user.email,
       googleId: user.googleId,

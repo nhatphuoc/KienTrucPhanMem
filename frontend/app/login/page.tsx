@@ -29,7 +29,7 @@ export default function Login() {
       localStorage.setItem('email', email);
       // Clear URL params và chuyển đến chat
       window.history.replaceState({}, document.title, '/login');
-      router.push('/chat');
+      router.push('/post');
       return;
     }
 
