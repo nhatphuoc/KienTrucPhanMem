@@ -9,5 +9,6 @@ router.post('/requests/:id/accept', authMiddleware, friendController.acceptFrien
 router.post('/requests/:id/reject', authMiddleware, friendController.rejectFriendRequest);
 router.get('/', authMiddleware, friendController.getFriends);
 router.get('/requests', authMiddleware, friendController.getPendingRequests);
+router.get('/friend-requests/sent', authMiddleware, friendController.getSentRequests);
 
 module.exports = router;

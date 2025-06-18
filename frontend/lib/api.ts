@@ -16,10 +16,11 @@ export async function searchUsers(query: string, token: string): Promise<any[]> 
 }
 
 export async function fetchUserProfile(userId: string, token: string): Promise<any> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
+  const endpoint = userId === 'me' ? '/users/me' : `/users/${userId}`;
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error('Failed to fetch profile');
+  if (!res.ok) throw new Error(`Failed to fetch profile: ${res.statusText}`);
   return res.json();
 }
 
@@ -49,6 +50,30 @@ export async function sendFriendRequest(friendEmail: string, token: string): Pro
     body: JSON.stringify({ friendEmail }),
   });
   if (!res.ok) throw new Error('Failed to send friend request');
+}
+
+export async function fetchPendingRequests(token: string): Promise<any[]> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/friends/requests`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch pending requests');
+  return res.json();
+}
+
+export async function fetchSentRequests(token: string): Promise<any[]> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/friend-requests/sent`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch sent requests');
+  return res.json();
+}
+
+export async function fetchAllUsers(token: string): Promise<any[]> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch all users');
+  return res.json();
 }
 
 export async function createPost(formData: FormData, token: string): Promise<any> {

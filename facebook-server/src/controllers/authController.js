@@ -43,6 +43,8 @@ exports.googleCallback = async (req, res) => {
     let user;
     try {
       user = await User.findByGoogleId(userInfo.id);
+    console.log('User Info1:', user); 
+
       if (!user) {
         user = await User.create({
           googleId: userInfo.id,
@@ -54,6 +56,9 @@ exports.googleCallback = async (req, res) => {
           return res.status(500).json({ error: 'Failed to create user' });
         }
       }
+
+    console.log('User Info2:', user); 
+
     } catch (err) {
       console.error('Error processing user:', err);
       return res.status(500).json({ error: 'Error findByGoogleId user' });
@@ -61,6 +66,7 @@ exports.googleCallback = async (req, res) => {
 
     // Tạo JWT token
     const token = jwt.sign({
+      id: user.id,
       username: user.username,
       email: user.email,
       googleId: user.googleId,
