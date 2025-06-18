@@ -65,44 +65,7 @@ app.use('/api/posts', postRoutes);
 const PORT = process.env.PORT || '5000';
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`); // Log khi server khởi động thành công
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        google_id TEXT UNIQUE NOT NULL,
-        username TEXT NOT NULL,
-        email TEXT NOT NULL,
-        avatar TEXT
-      );
-    `;
-    await sql`
-      CREATE TABLE IF NOT EXISTS friends (
-        user_id INTEGER REFERENCES users(id),
-        friend_id INTEGER REFERENCES users(id),
-        PRIMARY KEY (user_id, friend_id)
-      );
-    `;
-    await sql`
-      CREATE TABLE IF NOT EXISTS friend_requests (
-        id SERIAL PRIMARY KEY,
-        sender_id INTEGER REFERENCES users(id),
-        receiver_id INTEGER REFERENCES users(id),
-        status TEXT NOT NULL DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `;
-    await sql`
-      CREATE TABLE IF NOT EXISTS posts (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        content TEXT NOT NULL,
-        image_url TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `;
-  } catch (err) {
-    console.error('Database initialization error:', err.stack);
-  }
+
 });
 
 module.exports = app;
