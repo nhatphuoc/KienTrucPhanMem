@@ -40,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="navbar-nav">
               <Link href="/friends" className="nav-link">Friends</Link>
               <Link href="/posts" className="nav-link">Posts</Link>
+              <Link href="/chat" className="nav-link">Messenger</Link>
               <Link href="/login" className="nav-link">Logout</Link>
             </div>
           </div>
