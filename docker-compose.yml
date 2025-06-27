@@ -5,8 +5,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    volumes:
-      - ./facebook-server:/app
     env_file:
       - ./facebook-server/.env
     networks:
@@ -18,13 +16,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
     env_file:
       - ./frontend/.env
     depends_on:
       - facebook-server
-    command: ["npm", "run", "dev"]
+    command: ["npm", "run", "start"]
     networks:
       - app-network
 
@@ -34,8 +30,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    volumes:
-      - ./messenger-server:/app
     env_file:
       - ./messenger-server/.env
     networks:
