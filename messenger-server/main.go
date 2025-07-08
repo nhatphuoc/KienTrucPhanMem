@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"log"
-	"messenger-server/domain/usecases"
+	"messenger-server/application/service"
+	"messenger-server/application/usecases"
 	"messenger-server/infrastructure/config"
 	"messenger-server/infrastructure/database"
 	"messenger-server/infrastructure/repository"
 	"messenger-server/infrastructure/services"
-	"messenger-server/interfaces/http"
-	"messenger-server/interfaces/http/handlers"
+	"messenger-server/infrastructure/websocket"
+	"messenger-server/presentation/http"
+	"messenger-server/presentation/http/handlers"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 )
@@ -33,9 +35,8 @@ func main() {
 	// Khởi tạo repository với database
 	userRepo := repository.NewUserMongoRepository(db)
 	messageRepo := repository.NewMessageMongoRepository(db)
-	userStatusRepo := repository.NewUserStatusMongoRepository(db)
+	friendRepo := repository.NewFriendMongoRepository(db)
 
-	friendService := services.NewFriendService(env.FacebookServiceURL)
 	oauthService := services.NewOAuthService(env.GoogleClientID, env.GoogleClientSecret, env.GoogleRedirectURI)
 
 	cld, err := cloudinary.NewFromParams(env.CloudinaryCloudName, env.CloudinaryAPIKey, env.CloudinaryAPISecret)
@@ -43,14 +44,21 @@ func main() {
 		log.Fatalf("Failed to initialize Cloudinary: %v", err)
 	}
 
+	hub := websocket.NewHub()
+	go hub.Run()
+
+	// Khởi tạo use cases
 	authUC := usecases.NewAuthUseCase(userRepo, oauthService, env.JWTSecret)
-	messageUC := usecases.NewMessageUseCase(messageRepo, friendService)
-	userStatusUC := usecases.NewUserStatusUseCase(userStatusRepo, friendService)
+	messageService := service.NewMessageService(hub, messageRepo)
+	friendUC := usecases.NewFriendUseCase(friendRepo)
+	messageUC := usecases.NewMessageUseCase(messageService)
 
+	// Khởi tạo handlers
 	authHandler := handlers.NewAuthHandler(authUC, oauthService)
-	wsHandler := handlers.NewWebSocketHandler(messageUC, userStatusUC, cld)
+	wsHandler := handlers.NewWebSocketHandler(messageUC, cld, hub)
 
-	router := http.SetupRouter(authHandler, wsHandler, env.JWTSecret)
+	// Khởi tạo router
+	router := http.SetupRouter(authHandler, wsHandler, friendUC, hub, env.JWTSecret)
 
 	if err := router.Run(":8080"); err != nil {
 		log.Fatalf("Server run error: %v", err)
