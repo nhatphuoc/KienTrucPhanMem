@@ -1,10 +1,12 @@
 // frontend/components/ChatComponent.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface Message {
-  senderId: string;
-  receiverId: string;
+  id: string;
+  senderEmail: string;
+  receiverEmail: string;
   content: string;
+  timestamp: string;
   mediaUrl?: string;
 }
 
@@ -15,6 +17,7 @@ interface ChatComponentProps {
 
 export default function ChatComponent({ messages, onSend }: ChatComponentProps) {
   const [input, setInput] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleSend = () => {
     if (input.trim()) {
@@ -23,6 +26,10 @@ export default function ChatComponent({ messages, onSend }: ChatComponentProps) 
     }
   };
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   return (
     <div className="card">
       <div className="card-header bg-primary text-white">Chat</div>
@@ -30,14 +37,14 @@ export default function ChatComponent({ messages, onSend }: ChatComponentProps) 
         {messages.map((msg, index) => (
           <div
             key={index}
-            className={`p-2 mb-2 rounded ${
-              msg.senderId === localStorage.getItem('userId') ? 'bg-info text-white ml-auto' : 'bg-light'
-            }`}
+            className={`p-2 mb-2 rounded ${msg.senderEmail === localStorage.getItem('email') ? 'bg-info text-white ml-auto' : 'bg-light'}`}
             style={{ maxWidth: '70%', wordWrap: 'break-word' }}
           >
-            {msg.content}
+            <div>{msg.content}</div>
+            <small className="text-muted">{new Date(msg.timestamp).toLocaleTimeString()}</small>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
       <div className="card-footer">
         <div className="input-group">
@@ -46,10 +53,11 @@ export default function ChatComponent({ messages, onSend }: ChatComponentProps) 
             className="form-control"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            placeholder="Nhập tin nhắn..."
           />
           <button className="btn btn-primary" onClick={handleSend}>
-            Send
+            Gửi
           </button>
         </div>
       </div>
